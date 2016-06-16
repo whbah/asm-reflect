@@ -2,6 +2,7 @@
 Thumbs.db
 ehthumbs.db
 #local files
+.metadata
 target
 .settings
 # Folder config file
