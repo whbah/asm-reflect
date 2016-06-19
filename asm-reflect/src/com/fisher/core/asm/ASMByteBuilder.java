@@ -24,8 +24,8 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	public final static String mAsmBytesStr = "[B";
 	public final static String mAsmHashMapStr = "Ljava/util/HashMap;";
 	// ASM当前定义字符串
-	private final static String mAsmFunObject = "([Ljava/lang/Object;)Ljava/lang/Object;";
-	private final static String mAsmFunVoid = "([Ljava/lang/Object;)V";
+	private final static String mAsmFunObject = "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
+	private final static String mAsmFunVoid = "(Ljava/lang/Object;[Ljava/lang/Object;)V";
 	private final static String mAsmVoid = "()V";
 	private final static String mAsmInit = "<init>";
 	private final static byte[] emptyBytes = new byte[0];
@@ -48,10 +48,11 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 
 	// ASM对象类型
 	private final static String mAsmObjectBeanStr = "java/lang/Object";
-	/**
-	 * 非静态函数调用时对象属性名称
-	 */
-	private final static String mSpecialFieldName = "target";
+
+	// /**
+	// * 非静态函数调用时对象属性名称
+	// */
+	// private final static String mSpecialFieldName = "target";
 
 	public ASMByteBuilder() {
 		super(Thread.currentThread().getContextClassLoader());
@@ -123,6 +124,8 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	/**
 	 * 生成函数调用字节码
 	 * 
+	 * 
+	 * 
 	 * @param generateClassName
 	 * @param invokeClassName
 	 * @param implsStrings
@@ -131,6 +134,8 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	 * @param argsTypes
 	 * @param isStatic
 	 *            是否调用静态方法
+	 * 
+	 * 
 	 * @return
 	 */
 	private byte[] createAsmByte(String generateClassName,
@@ -179,8 +184,8 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 		// invokes the super class constructor
 		mw.visitMethodInsn(INVOKESPECIAL, mAsmObjectBeanStr, mAsmInit,
 				mAsmVoid, false);
-		mw = handleUnStaticField(mw, cw, isStatic, invokeClass,
-				generateClassName);
+		// mw = handleUnStaticField(mw, cw, isStatic, invokeClass,
+		// generateClassName);
 
 		mw.visitInsn(RETURN);
 		// this code uses a maximum of one stack element and one local variable
@@ -189,7 +194,12 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	}
 
 	/**
-	 * 创建静态函数调用
+	 * <ul>
+	 * <li>创建静态函数action/function invoke</li>
+	 * <li>继承接口方法 invoke(instance,args)</li>
+	 * <li>生成调用代码 Target.statticInvokeMethod(args);</li>
+	 * <li>instance参数在此无意义，仅为接口一致性保留</li>
+	 * </ul>
 	 * 
 	 * @param invokeClassName
 	 * @param implMethodName
@@ -214,7 +224,7 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 		if (argsTypes != null) {
 			argsCount = argsTypes.length;
 			for (int i = 0; i < argsCount; i++) {
-				mw.visitVarInsn(ALOAD, 1);
+				mw.visitVarInsn(ALOAD, 2);
 				int opCode = getOpcode(i);
 				if (opCode == BIPUSH) {
 					mw.visitIntInsn(opCode, i);
@@ -238,7 +248,11 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	}
 
 	/**
-	 * 创建非静态函数调用
+	 * <ul>
+	 * <li>创建非静态函数action/function invoke</li>
+	 * <li>继承接口方法 invoke(instance,args)</li>
+	 * <li>生成调用代码 (T)instance.invokeMethod(args);</li>
+	 * </ul>
 	 * 
 	 * @param invokeClassName
 	 * @param implMethodName
@@ -256,16 +270,15 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 		// 调用非静态方法
 		MethodVisitor mw = cw.visitMethod(ACC_PUBLIC, implMethodName,
 				implMethodDes, null, null);
-
-		mw.visitVarInsn(ALOAD, 0);
-		String filedDes = Type.getDescriptor(invokeClass);
-		mw.visitFieldInsn(GETFIELD, generateClassName, mSpecialFieldName,
-				filedDes);
+		mw.visitVarInsn(ALOAD, 1);
+		mw.visitTypeInsn(CHECKCAST, Type.getInternalName(invokeClass));
+		mw.visitVarInsn(ASTORE, 3);
+		mw.visitVarInsn(ALOAD, 3);
 		int argsCount = 0;
 		if (argsTypes != null) {
 			argsCount = argsTypes.length;
 			for (int i = 0; i < argsCount; i++) {
-				mw.visitVarInsn(ALOAD, 1);
+				mw.visitVarInsn(ALOAD, 2);
 				int opCode = getOpcode(i);
 				if (opCode == BIPUSH) {
 					mw.visitIntInsn(opCode, i);
@@ -289,37 +302,38 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 		mw.visitEnd();
 	}
 
-	/**
-	 * 适配非静态方法时，创建对象时初始化一个调用对象,生成后如下 class A { public Target target=new
-	 * Target(); public Object invokeFunction(Object[] args){
-	 * target.invokeMethod(args); } }
-	 * 
-	 * @param mw
-	 * @param cw
-	 * @param isStatic
-	 * @param invokeClass
-	 * @param generateClassName
-	 * @return
-	 */
-	private MethodVisitor handleUnStaticField(MethodVisitor mw, ClassWriter cw,
-			boolean isStatic, Class<?> invokeClass, String generateClassName) {
-		if (!isStatic) {
-			String filedDes = Type.getDescriptor(invokeClass);
-			String invokeClassName = Type.getInternalName(invokeClass);
-			cw.visitField(Opcodes.ACC_PUBLIC, mSpecialFieldName, filedDes,
-					null, null);
-			mw.visitVarInsn(ALOAD, 0);
-			mw.visitTypeInsn(NEW, invokeClassName);
-			// new address
-			mw.visitInsn(DUP);
-			// a=new ClassA();
-			mw.visitMethodInsn(INVOKESPECIAL, invokeClassName, mAsmInit,
-					mAsmVoid, false);
-			mw.visitFieldInsn(Opcodes.PUTFIELD, generateClassName,
-					mSpecialFieldName, filedDes);
-		}
-		return mw;
-	}
+	// /**
+	// * 适配非静态方法时，创建对象时初始化一个调用对象,生成后如下 class A { public Target target=new
+	// * Target(); public Object invokeFunction(Object[] args){
+	// * target.invokeMethod(args); } }
+	// *
+	// * @param mw
+	// * @param cw
+	// * @param isStatic
+	// * @param invokeClass
+	// * @param generateClassName
+	// * @return
+	// */
+	// private MethodVisitor handleUnStaticField(MethodVisitor mw, ClassWriter
+	// cw,
+	// boolean isStatic, Class<?> invokeClass, String generateClassName) {
+	// if (!isStatic) {
+	// String filedDes = Type.getDescriptor(invokeClass);
+	// String invokeClassName = Type.getInternalName(invokeClass);
+	// cw.visitField(Opcodes.ACC_PUBLIC, mSpecialFieldName, filedDes,
+	// null, null);
+	// mw.visitVarInsn(ALOAD, 0);
+	// mw.visitTypeInsn(NEW, invokeClassName);
+	// // new address
+	// mw.visitInsn(DUP);
+	// // a=new ClassA();
+	// mw.visitMethodInsn(INVOKESPECIAL, invokeClassName, mAsmInit,
+	// mAsmVoid, false);
+	// mw.visitFieldInsn(Opcodes.PUTFIELD, generateClassName,
+	// mSpecialFieldName, filedDes);
+	// }
+	// return mw;
+	// }
 
 	/**
 	 * 处理返回 基础类型采用对象类型的valueOf方法进行装箱

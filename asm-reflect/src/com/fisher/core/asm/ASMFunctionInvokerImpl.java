@@ -12,5 +12,5 @@ public interface ASMFunctionInvokerImpl {
 	 * @param args
 	 * @return
 	 */
-	public Object invokeFunction(Object[] args);
+	public Object invokeFunction(Object instance, Object[] args);
 }

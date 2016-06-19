@@ -11,5 +11,5 @@ public interface ASMActionInvokerImpl {
 	 * 
 	 * @param args
 	 */
-	public void invokeAction(Object[] args);
+	public void invokeAction(Object instance, Object[] args);
 }
