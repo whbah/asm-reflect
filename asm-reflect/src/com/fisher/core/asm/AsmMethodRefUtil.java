@@ -57,6 +57,38 @@ public class AsmMethodRefUtil {
 	}
 
 	/**
+	 * 动态执行非静态函数,返回函数执行结果
+	 * 
+	 * @param cls
+	 * @param methodName
+	 * @param types
+	 * @param objs
+	 * @return 执行函数后返回对象
+	 * @throws Exception
+	 */
+	public static Object invokeAsmFunc(String className, String methodName,
+			Object[] args, Class<?>[] argsTypes) throws Exception {
+		Class<?> cls = Class.forName(className);
+		return invokeAsmFunc(cls, methodName, args, argsTypes);
+	}
+
+	/**
+	 * 动态执行非静态函数,无返回值
+	 * 
+	 * @param clsName
+	 * @param methodName
+	 * @param types
+	 * @param objs
+	 * @return 执行函数后返回对象
+	 * @throws Exception
+	 */
+	public static void invokeAsmAction(String className, String methodName,
+			Object[] args, Class<?>[] argsTypes) throws Exception {
+		Class<?> cls = Class.forName(className);
+		invokeAsmAction(cls, methodName, args, argsTypes);
+	}
+
+	/**
 	 * 动态执行非静态函数,无返回值
 	 * 
 	 * @param clsName
