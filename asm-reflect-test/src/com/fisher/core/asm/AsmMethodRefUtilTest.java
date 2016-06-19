@@ -10,7 +10,7 @@ public class AsmMethodRefUtilTest {
 	public void testInvokeAction() throws Exception {
 		Class<?>[] Types = new Class<?>[3];
 		Types[0] = String.class;
-
+ 
 		Types[2] = String.class;
 		Types[1] = String.class;
 		String[] args = new String[3];
