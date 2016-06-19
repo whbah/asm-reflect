@@ -1,4 +1,4 @@
-package com.fisher.core.asm;
+package com.fisher.core.reflect;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -15,7 +15,7 @@ import com.fisher.core.util.reflect.MethodUtil;
  * ASM ClassWriter初始化参数修改为自动计算MaxStack和MaxLocals 避免出现Arguments can't fit into
  * locals in class file 错误信息
  */
-public class ASMByteBuilder extends ClassLoader implements Opcodes {
+public class AsmByteBuilder extends ClassLoader implements Opcodes {
 
 	// ASM基础数据类型字符串
 	public final static String mAsmObjectStr = "Ljava/lang/Object;";
@@ -54,7 +54,7 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	// */
 	// private final static String mSpecialFieldName = "target";
 
-	public ASMByteBuilder() {
+	public AsmByteBuilder() {
 		super(Thread.currentThread().getContextClassLoader());
 	}
 
@@ -74,17 +74,17 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	 * @throws IllegalAccessException
 	 * @throws Exception
 	 */
-	public ASMFunctionInvokerImpl createASMFunctionInvoker(
+	public AsmFunctionInvokerImpl createASMFunctionInvoker(
 			String generateClassName, Class<?> invokeClass, String method,
 			Class<?>[] argsTypes) throws Exception {
 		String[] implsStrings = new String[] { Type
-				.getInternalName(ASMFunctionInvokerImpl.class) };
+				.getInternalName(AsmFunctionInvokerImpl.class) };
 		byte[] bts = createAsmByte(generateClassName, invokeClass,
 				implsStrings, "invokeFunction", mAsmFunObject, method,
 				argsTypes);
 		try {
 			Class<?> mClass = defineClass(generateClassName, bts, 0, bts.length);
-			return (ASMFunctionInvokerImpl) mClass.newInstance();
+			return (AsmFunctionInvokerImpl) mClass.newInstance();
 		} finally {
 			bts = emptyBytes;
 		}
@@ -106,16 +106,16 @@ public class ASMByteBuilder extends ClassLoader implements Opcodes {
 	 * @throws IllegalAccessException
 	 * @throws Exception
 	 */
-	public ASMActionInvokerImpl createASMActionInvokerImpl(
+	public AsmActionInvokerImpl createASMActionInvokerImpl(
 			String generateClassName, Class<?> invokeClass, String method,
 			Class<?>[] argsTypes) throws Exception {
 		String[] implsStrings = new String[] { Type
-				.getInternalName(ASMActionInvokerImpl.class) };
+				.getInternalName(AsmActionInvokerImpl.class) };
 		byte[] bts = createAsmByte(generateClassName, invokeClass,
 				implsStrings, "invokeAction", mAsmFunVoid, method, argsTypes);
 		try {
 			Class<?> mClass = defineClass(generateClassName, bts, 0, bts.length);
-			return (ASMActionInvokerImpl) mClass.newInstance();
+			return (AsmActionInvokerImpl) mClass.newInstance();
 		} finally {
 			bts = emptyBytes;
 		}

@@ -1,4 +1,4 @@
-package com.fisher.core.asm;
+package com.fisher.core.reflect;
 
 import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
@@ -19,11 +19,11 @@ public class AsmMethodRefUtil {
 	 */
 	// func锁
 	private static Lock funcLock = new ReentrantLock();
-	private static HashMap<String, ASMFunctionInvokerImpl> funcMap = new HashMap<String, ASMFunctionInvokerImpl>();
+	private static HashMap<String, AsmFunctionInvokerImpl> funcMap = new HashMap<String, AsmFunctionInvokerImpl>();
 	private static HashMap<String, Object> funcInvokeInstance = new HashMap<String, Object>();
 	// action锁
 	private static Lock actionLock = new ReentrantLock();
-	private static HashMap<String, ASMActionInvokerImpl> actionMap = new HashMap<String, ASMActionInvokerImpl>();
+	private static HashMap<String, AsmActionInvokerImpl> actionMap = new HashMap<String, AsmActionInvokerImpl>();
 	private static HashMap<String, Object> actInvokeInstance = new HashMap<String, Object>();
 	private static final String mSplitStr = "_";
 
@@ -90,12 +90,12 @@ public class AsmMethodRefUtil {
 			throws Exception {
 		String targetName = getClassName(cls.getName());
 		String key = targetName + mSplitStr + methodName;
-		ASMFunctionInvokerImpl impl;
+		AsmFunctionInvokerImpl impl;
 		if (!funcMap.containsKey(key)) {
 			funcLock.lock();
 			try {
 				if (!funcMap.containsKey(key)) {
-					impl = new ASMByteBuilder().createASMFunctionInvoker(key,
+					impl = new AsmByteBuilder().createASMFunctionInvoker(key,
 							cls, methodName, argsTypes);
 					funcMap.put(key, impl);
 					funcInvokeInstance.put(key, cls.newInstance());
@@ -174,12 +174,12 @@ public class AsmMethodRefUtil {
 			throws Exception {
 		String targetName = getClassName(cls.getName());
 		String key = targetName + mSplitStr + methodName;
-		ASMActionInvokerImpl impl;
+		AsmActionInvokerImpl impl;
 		if (!actionMap.containsKey(key)) {
 			actionLock.lock();
 			try {
 				if (!actionMap.containsKey(key)) {
-					impl = new ASMByteBuilder().createASMActionInvokerImpl(key,
+					impl = new AsmByteBuilder().createASMActionInvokerImpl(key,
 							cls, methodName, argsTypes);
 					actionMap.put(key, impl);
 					actInvokeInstance.put(key, cls.newInstance());

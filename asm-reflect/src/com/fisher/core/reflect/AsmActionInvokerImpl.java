@@ -1,10 +1,10 @@
-package com.fisher.core.asm;
+package com.fisher.core.reflect;
 
 /**
  * 通过ASM调用无返回值非静态函数接口 函数传入参数类型为Object
  * 
  */
-public interface ASMActionInvokerImpl {
+public interface AsmActionInvokerImpl {
 
 	/**
 	 * 传入参数类型为Object[]
